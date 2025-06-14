@@ -1,0 +1,130 @@
+  .landing-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(to bottom right, #d4fc79, #96e6a1);
+    font-family: 'Segoe UI', sans-serif;
+    padding: 1rem;
+    text-align: center;
+  }
+
+  .landing-card {
+    background: white;
+    padding: 2.5rem 3rem;
+    border-radius: 20px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+    max-width: 600px;
+    width: 100%;
+  }
+
+  .landing-title {
+    font-size: 2.8rem;
+    font-weight: bold;
+    color: #2e7d32;
+    margin-bottom: 1rem;
+  }
+
+  .landing-desc {
+    font-size: 1.1rem;
+    color: #555;
+    margin-bottom: 2rem;
+  }
+
+  .landing-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .landing-buttons button {
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.3s;
+    font-weight: bold;
+  }
+
+  .landing-buttons button:first-child {
+    background-color: #2e7d32;
+    color: white;
+  }
+
+  .landing-buttons button:first-child:hover {
+    background-color: #1b5e20;
+  }
+
+  .landing-buttons button:last-child {
+    background-color: white;
+    border: 2px solid #2e7d32;
+    color: #2e7d32;
+  }
+
+  .landing-buttons button:last-child:hover {
+    background-color: #f1f1f1;
+  }
+/* Add these styles at the end of your existing LandingPage.css */
+
+.login-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.login-main-btn {
+  background-color: #2e7d32;
+  color: white;
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.login-main-btn:hover {
+  background-color: #1b5e20;
+}
+
+.login-dropdown-content {
+  position: absolute;
+  top: 110%;
+  left: 0;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  animation: fadeSlide 0.3s ease-out;
+}
+
+.login-dropdown-content button {
+  background-color: #ffffff;
+  border: 2px solid #2e7d32;
+  color: #2e7d32;
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.login-dropdown-content button:hover {
+  background-color: #f1f1f1;
+}
+
+@keyframes fadeSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-10%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
