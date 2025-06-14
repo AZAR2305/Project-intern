@@ -6,6 +6,8 @@ import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 import User from '../models/User.js';
 import dotenv from 'dotenv';
+import Admin from '../models/Admin.js'; // add this with your other imports
+
 
 dotenv.config();
 
@@ -19,19 +21,24 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// Signup
+
 router.post('/signup', async (req, res) => {
   const { username, email, password } = req.body;
   try {
-    const existing = await User.findOne({ email });
-    if (existing) return res.status(400).json({ msg: 'Email already exists' });
+    const existingUser = await User.findOne({ email });
+    if (existingUser) return res.status(400).json({ msg: 'Email already exists as user' });
+
+    const existingAdmin = await Admin.findOne({ email });
+    if (existingAdmin) return res.status(400).json({ msg: 'Email already exists as admin' });
 
     const hashed = await bcrypt.hash(password, 10);
     const token = crypto.randomBytes(32).toString('hex');
-    const user = new User({ username, email, password: hashed, verificationToken: token });
+    const user = new User({ username, email, password: hashed, verificationToken: token, role: 'user' });
     await user.save();
 
     const url = `http://localhost:5000/api/auth/verify/${token}`;
+   
+
     await transporter.sendMail({
       to: email,
       subject: 'Verify Email',
@@ -39,12 +46,13 @@ router.post('/signup', async (req, res) => {
     });
 
     res.status(201).json({ msg: 'User created, verify your email.' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  }  catch (err) {
+  console.error('Signup route error:', err);
+  res.status(500).json({ error: err.message });
+}
 });
-
 // Email verification
+// Email verification (updated)
 router.get('/verify/:token', async (req, res) => {
   try {
     const user = await User.findOne({ verificationToken: req.params.token });
@@ -54,7 +62,11 @@ router.get('/verify/:token', async (req, res) => {
     user.verificationToken = undefined;
     await user.save();
 
-    res.send('Email verified successfully!');
+    // Auto-login after verification
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+    // Redirect with token as query param (or store in cookie for security)
+    res.redirect(`http://localhost:3000/profile?token=${token}`);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -77,4 +89,18 @@ router.post('/login', async (req, res) => {
   }
 });
 
+router.post('/admin/login', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const admin = await Admin.findOne({ email });
+    if (!admin || !(await bcrypt.compare(password, admin.password))) {
+      return res.status(401).json({ msg: 'Invalid credentials' });
+    }
+
+    const token = jwt.sign({ id: admin._id, role: 'admin' }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    res.json({ token });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 export default router;
