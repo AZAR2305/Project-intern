@@ -22,7 +22,7 @@ function Login() {
       const res = await axios.post('http://localhost:5000/api/auth/login', form);
       console.log("Login success:", res.data);
       localStorage.setItem('token', res.data.token);
-      setToken(res.data.token); // ✅ update context so App reacts
+      setToken(res.data.token);
       setMessage('Login successful!');
       navigate('/dashboard');
     } catch (err) {

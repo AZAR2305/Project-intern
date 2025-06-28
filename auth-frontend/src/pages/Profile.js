@@ -1,143 +1,136 @@
-// ProfilePage.js
+// src/pages/Profile.js
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import './Profile.css';
 
-function ProfilePage() {
-  const [user, setUser] = useState(null);
-  const [editMode, setEditMode] = useState(false);
-  const [formData, setFormData] = useState({ username: '', email: '' });
-  const [orders, setOrders] = useState([]);
-  const [error, setError] = useState('');
-  const [token, setToken] = useState('');
+const Profile = () => {
   const navigate = useNavigate();
-  const location = useLocation();
+  const urlParams = new URLSearchParams(window.location.search);
+const tokenFromURL = urlParams.get('token');
+const token = tokenFromURL || localStorage.getItem('token');
+console.log('Token:', token);
+const [isNew, setIsNew] = useState(false);
 
-  // 🔑 STEP 1: Capture token (from URL or localStorage)
+
+useEffect(() => {
+  if (tokenFromURL) localStorage.setItem('token', tokenFromURL);
+}, [tokenFromURL]);
+
+
+  const [user, setUser] = useState({});
+  const [orders, setOrders] = useState([]);
+  const [editMode, setEditMode] = useState(false);
+  const [formData, setFormData] = useState({
+    username: '',
+    email: '',
+    address: '',
+    phone: '',
+    age: ''
+  });
+
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const tokenFromUrl = params.get('token');
+    if (!token) return navigate('/login');
+   axios.get('http://localhost:5000/api/user/me', { headers: { Authorization: `Bearer ${token}` } })
+.then(({ data }) => {
+      setUser(data.user);
+      setOrders(data.orders);
+      const { username, email, address, phone, age } = data.user;
+      const incomplete = !address || !phone || !age;
+      setIsNew(incomplete);
+      if (!incomplete) setFormData({ username, email, address, phone, age });
+      else setFormData({ username, email, address: '', phone: '', age: '' });
+    }).catch(() => navigate('/login'));
+  }, [token, navigate]);
 
-    if (tokenFromUrl) {
-      localStorage.setItem('token', tokenFromUrl);
-      setToken(tokenFromUrl);
-      window.history.replaceState({}, document.title, '/profile');
-    } else {
-      const storedToken = localStorage.getItem('token');
-      if (storedToken) {
-        setToken(storedToken);
-      } else {
-        setError('No session token found. Please login.');
-      }
-    }
-  }, [location]);
-
-  // 🔑 STEP 2: Fetch user & orders when token is available
-  useEffect(() => {
-    if (!token) return;
-
-    const fetchUserData = async () => {
-      try {
-        const res = await axios.get('http://localhost:5000/api/protected/user', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        setUser(res.data);
-        setFormData({ username: res.data.username, email: res.data.email });
-
-        const orderRes = await axios.get('http://localhost:5000/api/orders', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setOrders(orderRes.data);
-      } catch (err) {
-        console.error('Error fetching data:', err);
-        setError('Session expired. Please login again.');
-        localStorage.removeItem('token');
-      }
-    };
-
-    fetchUserData();
-  }, [token]);
-
-  // 🔁 STEP 3: Redirect if there's an error
-  useEffect(() => {
-    if (error) {
-      const timeout = setTimeout(() => navigate('/login'), 2000);
-      return () => clearTimeout(timeout);
-    }
-  }, [error, navigate]);
-
+  const handleEditToggle = () => setEditMode(v => !v);
   const handleLogout = () => {
     localStorage.removeItem('token');
-    navigate('/login');
+    navigate('/');
   };
 
-  const handleEditToggle = () => setEditMode(!editMode);
-
-  const handleInputChange = (e) =>
+  const handleChange = e => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-
-  const handleSave = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      await axios.put('http://localhost:5000/api/user/update', formData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setUser({ ...user, ...formData });
-      setEditMode(false);
-    } catch (err) {
-      alert('Failed to update profile');
-    }
   };
 
-  if (error) return <div className="profile-container"><p>{error}</p></div>;
-  if (!user) return <div className="profile-container"><p>Loading profile...</p></div>;
+const handleSave = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    
+    const updateData = {
+      username: formData.username,
+      email: formData.email,
+      phone: formData.phone,
+      address: formData.address,
+      age: formData.age,
+    };
+
+    const response = await axios.put(
+      'http://localhost:5000/api/user/me',
+      updateData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+    setUser(response.data.user);
+    console.log("Profile updated successfully.");
+  } catch (err) {
+    console.error("Profile update error:", err);
+    alert(err.response?.data?.msg || 'Failed to update profile.');
+  }
+};
+
 
   return (
     <div className="profile-container">
       <div className="profile-card">
-        <h2>Welcome, {user.username}!</h2>
+        <h2>🧑 {isNew ? 'Complete Your Profile' : `Welcome, ${user.username}!`}</h2>
 
-        {editMode ? (
-          <div className="edit-fields">
-            <input name="username" value={formData.username} onChange={handleInputChange} />
-            <input name="email" value={formData.email} onChange={handleInputChange} />
-            <div className="edit-buttons">
-              <button onClick={handleSave}>Save</button>
-              <button onClick={handleEditToggle}>Cancel</button>
+        <div className="form-block">
+          {['username','email','address','phone','age'].map(field => (
+            <div key={field} className="field-group">
+              <label>{field.charAt(0).toUpperCase()+field.slice(1)}:</label>
+              <input
+                name={field}
+                value={formData[field]}
+                onChange={handleChange}
+                placeholder={field}
+              />
             </div>
-          </div>
-        ) : (
-          <div className="info-block">
-            <p><strong>Email:</strong> {user.email}</p>
-            <p><strong>Role:</strong> {user.role}</p>
-            <button onClick={handleEditToggle}>Edit Profile</button>
-          </div>
-        )}
+          ))}
+          <button className="save-btn" onClick={handleSave}>
+            {isNew ? 'Save Profile' : 'Update Profile'}
+          </button>
+        </div>
 
         {user.role === 'admin' ? (
           <div className="admin-section">
             <h3>Admin Dashboard</h3>
-            <p>You can manage products, users, and analytics here. (Coming Soon...)</p>
+            <button onClick={() => navigate('/admin/employees')}>Manage Employees</button>
+            <button onClick={() => navigate('/admin/purchases')}>View Purchases</button>
           </div>
         ) : (
           <div className="user-section">
             <h3>Your Orders</h3>
             {orders.length ? (
-              <ul>
-                {orders.map((order, i) => (
-                  <li key={i}>Order #{order._id} - {order.status}</li>
+              <ul className="orders-list">
+                {orders.map(o => (
+                  <li key={o._id}>
+                    Order #{o._id.slice(-6)} – {o.status} – {new Date(o.createdAt).toLocaleDateString()}
+                  </li>
                 ))}
               </ul>
             ) : <p>No orders yet.</p>}
           </div>
         )}
 
-        <button className="logout-btn" onClick={handleLogout}>Logout</button>
+        <button className="logout-btn" onClick={handleLogout}>Logout 🔓</button>
       </div>
     </div>
   );
-}
+};
 
-export default ProfilePage;
+export default Profile;

@@ -1,26 +1,26 @@
 import jwt from 'jsonwebtoken';
 
-export const verifyToken = (req, res, next) => {
+export function verifyToken(req, res, next) {
   const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer '))
+    return res.status(401).json({ msg: 'Missing token' });
 
-  if (!authHeader) return res.status(401).json({ message: 'No token provided' });
-
-  const token = authHeader.split(' ')[1]; // Bearer tokenString
-
-  if (!token) return res.status(401).json({ message: 'No token provided' });
+  const token = authHeader.split(' ')[1];
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // user info in token payload
+    req.user = decoded;
     next();
-  } catch (error) {
-    return res.status(401).json({ message: 'Invalid token' });
+  } catch (err) {
+    res.status(401).json({ msg: 'Invalid token' });
   }
-};
+}
 
-export const requireRole = (roles) => (req, res, next) => {
-  if (!roles.includes(req.user.role)) {
-    return res.status(403).json({ message: 'Forbidden: Access denied' });
-  }
-  next();
-};
+export function requireRole(role) {
+  return function (req, res, next) {
+    if (req.user.role !== role) {
+      return res.status(403).json({ msg: 'Access denied: insufficient permissions' });
+    }
+    next();
+  };
+}

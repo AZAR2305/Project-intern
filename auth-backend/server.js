@@ -6,12 +6,28 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
 import protectedRoutes from './routes/protected.js';
 
+// ✅ Correct for ESM (matching rest of your file)
+import orderRoutes from './routes/orderRoutes.js';
+import userRoutes from './routes/user.js';
+
+
+
+
 dotenv.config();
 
 const app = express();
 
 app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true
+}));
+
 app.use(express.json());
+app.get('/', (req, res) => {
+  res.send('API is working');
+});
+
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('MongoDB connected'))
@@ -20,6 +36,8 @@ mongoose.connect(process.env.MONGO_URI)
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/protected', protectedRoutes);
+app.use('/api/user', userRoutes);
+app.use('/api/order', orderRoutes);
 
 
 
