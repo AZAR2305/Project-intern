@@ -6,9 +6,11 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
 import protectedRoutes from './routes/protected.js';
 
-// ✅ Correct for ESM (matching rest of your file)
 import orderRoutes from './routes/orderRoutes.js';
 import userRoutes from './routes/user.js';
+import employeeRoutes from './routes/employees.js';
+
+
 
 
 
@@ -38,6 +40,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/protected', protectedRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/order', orderRoutes);
+app.use('/api/employees', employeeRoutes);
 
 
 

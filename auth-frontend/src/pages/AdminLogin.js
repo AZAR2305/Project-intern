@@ -15,7 +15,7 @@ function AdminLogin() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/login', form);
+      const res = await axios.post('http://localhost:5000/api/auth/admin/login', form);
       if (res.data.token) {
         const payload = JSON.parse(atob(res.data.token.split('.')[1]));
         if (payload.role !== 'admin') {

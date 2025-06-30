@@ -40,7 +40,10 @@ const transporter = nodemailer.createTransport({
     const hashed = await bcrypt.hash(password, 10);
     const token = crypto.randomBytes(32).toString('hex');
 
-    // Create new user
+
+
+// Update your Admin document manually with this new hash
+console.log(hashed);
     const user = new User({
       username,
       email,
@@ -123,19 +126,25 @@ router.post('/login', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 router.post('/admin/login', async (req, res) => {
   const { email, password } = req.body;
-  try {
-    const admin = await Admin.findOne({ email });
-    if (!admin || !(await bcrypt.compare(password, admin.password))) {
-      return res.status(401).json({ msg: 'Invalid credentials' });
-    }
 
-    const token = jwt.sign({ id: admin._id, role: 'admin' }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    res.json({ token });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+  const admin = await Admin.findOne({ email });
+
+  if (!admin) {
+    console.log("Admin not found for email:", email);
+    return res.status(401).json({ msg: 'Invalid credentials' });
   }
+
+  const isMatch = await bcrypt.compare(password, admin.password);
+
+
+  if (!isMatch) {
+    return res.status(401).json({ msg: 'Invalid credentials' });
+  }
+
+  const token = jwt.sign({ id: admin._id, role: 'admin' }, process.env.JWT_SECRET, { expiresIn: '1h' });
+  res.json({ token });
 });
+
 export default router;

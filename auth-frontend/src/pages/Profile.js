@@ -106,27 +106,6 @@ const handleSave = async () => {
           </button>
         </div>
 
-        {user.role === 'admin' ? (
-          <div className="admin-section">
-            <h3>Admin Dashboard</h3>
-            <button onClick={() => navigate('/admin/employees')}>Manage Employees</button>
-            <button onClick={() => navigate('/admin/purchases')}>View Purchases</button>
-          </div>
-        ) : (
-          <div className="user-section">
-            <h3>Your Orders</h3>
-            {orders.length ? (
-              <ul className="orders-list">
-                {orders.map(o => (
-                  <li key={o._id}>
-                    Order #{o._id.slice(-6)} – {o.status} – {new Date(o.createdAt).toLocaleDateString()}
-                  </li>
-                ))}
-              </ul>
-            ) : <p>No orders yet.</p>}
-          </div>
-        )}
-
         <button className="logout-btn" onClick={handleLogout}>Logout 🔓</button>
       </div>
     </div>
